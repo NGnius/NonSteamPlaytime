@@ -1,10 +1,10 @@
 {
-  "name": "Example Plugin",
-  "author": "John Doe",
-  "flags": ["debug", "_root"],
+  "name": "NonSteamPlaytime",
+  "author": "NGnius",
+  "flags": [],
   "publish": {
-    "tags": ["template", "root"],
-    "description": "Decky example plugin.",
-    "image": "https://opengraph.githubassets.com/1/SteamDeckHomebrew/PluginLoader"
+    "tags": ["utility"],
+    "description": "Keeps track of playtime for non-steam games and apps since Steam doesn't.",
+    "image": "//TODO"
   }
 }

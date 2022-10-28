@@ -1,14 +1,11 @@
 import {
   ButtonItem,
   definePlugin,
-  DialogButton,
-  Menu,
-  MenuItem,
   PanelSection,
   PanelSectionRow,
   Router,
   ServerAPI,
-  showContextMenu,
+  ServerResponse,
   staticClasses,
 } from "decky-frontend-lib";
 import { VFC } from "react";
@@ -21,7 +18,7 @@ import logo from "../assets/logo.png";
 //   right: number;
 // }
 
-const Content: VFC<{ serverAPI: ServerAPI }> = ({}) => {
+const Content: VFC<{ serverApi: ServerAPI }> = ({serverApi}) => {
   // const [result, setResult] = useState<number | undefined>();
 
   // const onClick = async () => {
@@ -42,18 +39,13 @@ const Content: VFC<{ serverAPI: ServerAPI }> = ({}) => {
       <PanelSectionRow>
         <ButtonItem
           layout="below"
-          onClick={(e) =>
-            showContextMenu(
-              <Menu label="Menu" cancelText="CAAAANCEL" onCancel={() => {}}>
-                <MenuItem onSelected={() => {}}>Item #1</MenuItem>
-                <MenuItem onSelected={() => {}}>Item #2</MenuItem>
-                <MenuItem onSelected={() => {}}>Item #3</MenuItem>
-              </Menu>,
-              e.currentTarget ?? window
-            )
-          }
+          onClick={(_e) => {
+            serverApi.callPluginMethod<{}, {}>("get_playtimes", {}).then((response: ServerResponse<{}>) => {
+              displayPlaytimes(response.result);
+            });
+          }}
         >
-          Server says yolo
+          Reload playtimes
         </ButtonItem>
       </PanelSectionRow>
 
@@ -78,28 +70,47 @@ const Content: VFC<{ serverAPI: ServerAPI }> = ({}) => {
   );
 };
 
-const DeckyPluginRouterTest: VFC = () => {
-  return (
-    <div style={{ marginTop: "50px", color: "white" }}>
-      Hello World!
-      <DialogButton onClick={() => Router.NavigateToStore()}>
-        Go to Store
-      </DialogButton>
-    </div>
-  );
-};
+function displayPlaytimes(playtimes: {}) {
+  console.log("NonSteamPlaytime playtimes", playtimes);
+  Object.entries(playtimes).forEach(([key, value]) => {
+    //@ts-ignore
+    appStore.GetAppOverviewByGameID(key).minutes_playtime_forever = value / 60.0;
+    console.log("NonSteamPlaytime", key, "played for", value, "seconds");
+  });
+}
+
+
 
 export default definePlugin((serverApi: ServerAPI) => {
-  serverApi.routerHook.addRoute("/decky-plugin-test", DeckyPluginRouterTest, {
-    exact: true,
+  //@ts-ignore
+  let lifetimeHook = SteamClient.GameSessions.RegisterForAppLifetimeNotifications((update) => {
+      console.log("NonSteamPlaytime AppLifetimeNotification", update);
+      serverApi.callPluginMethod("on_lifetime_callback", {data: update}).then(_ => {
+        serverApi.callPluginMethod<{}, {}>("get_playtimes", {}).then((response: ServerResponse<{}>) => {
+          displayPlaytimes(response.result);
+        });
+      });
+  });
+  //@ts-ignore
+  let startHook = SteamClient.Apps.RegisterForGameActionStart((actionType, id, action) => {
+      console.log("NonSteamPlaytime GameActionStart", id);
+      serverApi.callPluginMethod("on_game_start_callback", {idk: actionType, gameId: id, action: action});
   });
 
+  serverApi.callPluginMethod<{}, {}>("get_playtimes", {}).then((response: ServerResponse<{}>) => {
+    displayPlaytimes(response.result);
+  });
+
+  console.log("NonSteamPlaytime started");
+
   return {
-    title: <div className={staticClasses.Title}>Example Plugin</div>,
-    content: <Content serverAPI={serverApi} />,
+    title: <div className={staticClasses.Title}>NonSteamPlaytime</div>,
+    content: <Content serverApi={serverApi} />,
     icon: <FaShip />,
     onDismount() {
-      serverApi.routerHook.removeRoute("/decky-plugin-test");
+      lifetimeHook!.unregister();
+      startHook!.unregister();
+      console.log("NonSteamPlaytime ended");
     },
   };
 });
