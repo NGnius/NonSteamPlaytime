@@ -50,7 +50,7 @@ class Plugin:
         if not os.path.exists(SAVE_PATH):
             os.makedirs(SAVE_FOLDER, exist_ok=True)
         with open(SAVE_PATH, "w") as save_data:
-            json.dump(self.playtimes, indent=2)
+            json.dump(self.playtimes, save_data, indent=2)
 
     async def on_lifetime_callback(self, data):
         logger.debug("Handling lifetime notification")

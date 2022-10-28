@@ -3,15 +3,12 @@ import {
   definePlugin,
   PanelSection,
   PanelSectionRow,
-  Router,
   ServerAPI,
   ServerResponse,
   staticClasses,
 } from "decky-frontend-lib";
 import { VFC } from "react";
 import { FaShip } from "react-icons/fa";
-
-import logo from "../assets/logo.png";
 
 // interface AddMethodArgs {
 //   left: number;
@@ -48,24 +45,6 @@ const Content: VFC<{ serverApi: ServerAPI }> = ({serverApi}) => {
           Reload playtimes
         </ButtonItem>
       </PanelSectionRow>
-
-      <PanelSectionRow>
-        <div style={{ display: "flex", justifyContent: "center" }}>
-          <img src={logo} />
-        </div>
-      </PanelSectionRow>
-
-      <PanelSectionRow>
-        <ButtonItem
-          layout="below"
-          onClick={() => {
-            Router.CloseSideMenus();
-            Router.Navigate("/decky-plugin-test");
-          }}
-        >
-          Router
-        </ButtonItem>
-      </PanelSectionRow>
     </PanelSection>
   );
 };
@@ -74,7 +53,7 @@ function displayPlaytimes(playtimes: {}) {
   console.log("NonSteamPlaytime playtimes", playtimes);
   Object.entries(playtimes).forEach(([key, value]) => {
     //@ts-ignore
-    appStore.GetAppOverviewByGameID(key).minutes_playtime_forever = value / 60.0;
+    appStore.GetAppOverviewByGameID(key).minutes_playtime_forever = (value / 60.0).toFixed(1);
     console.log("NonSteamPlaytime", key, "played for", value, "seconds");
   });
 }
